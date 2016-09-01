@@ -3,6 +3,7 @@ package utils;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -12,6 +13,8 @@ import org.apache.chemistry.opencmis.client.api.CmisObject;
 import org.apache.chemistry.opencmis.client.api.Document;
 import org.apache.chemistry.opencmis.client.api.Folder;
 import org.apache.chemistry.opencmis.client.api.ItemIterable;
+import org.apache.chemistry.opencmis.client.api.ObjectType;
+import org.apache.chemistry.opencmis.client.api.OperationContext;
 import org.apache.chemistry.opencmis.client.api.QueryResult;
 import org.apache.chemistry.opencmis.client.api.Repository;
 import org.apache.chemistry.opencmis.client.api.Session;
@@ -20,13 +23,14 @@ import org.apache.chemistry.opencmis.client.runtime.SessionFactoryImpl;
 import org.apache.chemistry.opencmis.commons.PropertyIds;
 import org.apache.chemistry.opencmis.commons.SessionParameter;
 import org.apache.chemistry.opencmis.commons.data.ContentStream;
-import org.apache.chemistry.opencmis.commons.enums.BaseTypeId;
+import org.apache.chemistry.opencmis.commons.definitions.PropertyDefinition;
 import org.apache.chemistry.opencmis.commons.enums.BindingType;
 import org.apache.chemistry.opencmis.commons.enums.VersioningState;
 import org.apache.chemistry.opencmis.commons.impl.dataobjects.ContentStreamImpl;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
+
+import com.oplosite.models.ContentModel;
 
 public class AlfrescoUtil {
 
@@ -49,14 +53,6 @@ public class AlfrescoUtil {
 	 * Folder path
 	 */
 	public static final String FOLDER_PATH = "/User Homes";
-
-	/**
-	 * The content type that should be used for the uploaded objects. The
-	 * default below Assumes you've deployed the Alfresco model included with
-	 * the CMIS & Apache Chemistry in Action book from Manning, see
-	 * https://github.com/fmui/ApacheChemistryInAction/tree/master/repositories/alfresco
-	 */
-	public static final String CONTENT_TYPE = "D:cmisbook:image";
 
 	// Probably do not need to change any constants below this
 
@@ -122,34 +118,10 @@ public class AlfrescoUtil {
 		return id;
 	}
 
-	Object[] download(String lokasi_file) throws Exception {
-		String urlAlfresco = AlfrescoUtil.ALFRESCO_API_URL;
-
-		// Default factory implementation of client runtime.
-		SessionFactory sessionFactory = SessionFactoryImpl.newInstance();
-		Map<String, String> parameter = new HashMap<String, String>();
-
-		// User credentials.
-		parameter.put(SessionParameter.USER, AlfrescoUtil.USER_NAME);
-		parameter.put(SessionParameter.PASSWORD, AlfrescoUtil.PASSWORD);
-
-		// Connection settings.
-		parameter.put(SessionParameter.ATOMPUB_URL, urlAlfresco + "/alfresco/service/cmis"); // URL
-																								// to
-																								// your
-																								// CMIS
-																								// server.
-		// parameter.put(SessionParameter.REPOSITORY_ID, "myRepository"); //Only
-		// necessary if there is more than one repository.
-		parameter.put(SessionParameter.BINDING_TYPE, BindingType.ATOMPUB.value());
-
-		// Create session.
-		Session session = null;
-		// This supposes only one repository is available at the URL.
-		Repository soleRepository = sessionFactory.getRepositories(parameter).get(0);
-		session = soleRepository.createSession();
+	public Object[] download(String id) throws Exception {
+		Session session = createSession();
 		Object[] result = new Object[3];
-		Document document = (Document) session.getObjectByPath(AlfrescoUtil.ALFRESCO_API_URL + "/" + lokasi_file);
+		Document document = (Document) session.getObject(session.createObjectId(id));
 		InputStream stream = document.getContentStream().getStream();
 		String type = document.getContentStream().getMimeType();
 		String filename = document.getName();
@@ -161,34 +133,10 @@ public class AlfrescoUtil {
 		return result;
 	}
 
-	Object[] downloadNew(String lokasi_file) throws Exception {
-		String urlAlfresco = AlfrescoUtil.ALFRESCO_API_URL;
-
-		// Default factory implementation of client runtime.
-		SessionFactory sessionFactory = SessionFactoryImpl.newInstance();
-		Map<String, String> parameter = new HashMap<String, String>();
-
-		// User credentials.
-		parameter.put(SessionParameter.USER, AlfrescoUtil.USER_NAME);
-		parameter.put(SessionParameter.PASSWORD, AlfrescoUtil.PASSWORD);
-
-		// Connection settings.
-		parameter.put(SessionParameter.ATOMPUB_URL, urlAlfresco + "/alfresco/service/cmis"); // URL
-																								// to
-																								// your
-																								// CMIS
-																								// server.
-		// parameter.put(SessionParameter.REPOSITORY_ID, "myRepository"); //Only
-		// necessary if there is more than one repository.
-		parameter.put(SessionParameter.BINDING_TYPE, BindingType.ATOMPUB.value());
-
-		// Create session.
-		Session session = null;
-		// This supposes only one repository is available at the URL.
-		Repository soleRepository = sessionFactory.getRepositories(parameter).get(0);
-		session = soleRepository.createSession();
+	Object[] downloadByPath(String path) throws Exception {
+		Session session = createSession();
 		Object[] result = new Object[3];
-		Document document = (Document) session.getObjectByPath(lokasi_file);
+		Document document = (Document) session.getObjectByPath(path);
 		InputStream stream = document.getContentStream().getStream();
 		String type = document.getContentStream().getMimeType();
 		String filename = document.getName();
@@ -325,39 +273,80 @@ public class AlfrescoUtil {
 
 		return filename;
 	}
-	
+
 	public Folder connect(String repositoryId) {
-		System.out.println("repo id: "+repositoryId);
+		System.out.println(">> Connect");
+		System.out.println("repo id: " + repositoryId);
 		SessionFactory sessionFactory = SessionFactoryImpl.newInstance();
 		Map<String, String> parameter = new HashMap<String, String>();
 		parameter.put(SessionParameter.USER, "admin");
 		parameter.put(SessionParameter.PASSWORD, "admin");
 		parameter.put(SessionParameter.ATOMPUB_URL, AlfrescoUtil.ATOMPUB_URL);
-		parameter.put(SessionParameter.BINDING_TYPE,
-				BindingType.ATOMPUB.value());
+		parameter.put(SessionParameter.BINDING_TYPE, BindingType.ATOMPUB.value());
 		parameter.put(SessionParameter.REPOSITORY_ID, repositoryId);
 
 		Session session = sessionFactory.createSession(parameter);
-		
+
 		return session.getRootFolder();
 	}
 
 	/**
 	 * 
 	 * @param target
+	 * @throws Exception 
 	 */
-	public void listFolder(int depth, Folder target) {
+	public ArrayList<ContentModel> listFolder(String folderId) throws Exception {
+
+		int maxItemsPerPage = 10;
+		ArrayList<ContentModel> contentModels = new ArrayList<>();
+
+		Session session = createSession();
+		System.out.println("Folder id: " + folderId);
+		CmisObject object = session.getObject(session.createObjectId(folderId));
+		Folder folder = (Folder) object;
+		System.out.println("Folder name: " + folder.getName());
+		OperationContext operationContext = session.createOperationContext();
+		operationContext.setMaxItemsPerPage(maxItemsPerPage);
+
+		ItemIterable<CmisObject> children = folder.getChildren(operationContext);
+
+		Iterator<CmisObject> pageItems = children.iterator();
 		
-		String indent = StringUtils.repeat("\t", depth);
-		for (Iterator<CmisObject> it = target.getChildren().iterator(); it.hasNext();) {
-			CmisObject o = it.next();
-			if (BaseTypeId.CMIS_DOCUMENT.equals(o.getBaseTypeId())) {
-				System.out.println(indent + "[Docment] " + o.getName());
-			} else if (BaseTypeId.CMIS_FOLDER.equals(o.getBaseTypeId())) {
-				System.out.println(indent + "[Folder] " + o.getName());
-				listFolder(++depth, (Folder) o);
-			}
+		while(pageItems.hasNext()) {
+		    CmisObject item = pageItems.next();
+		    ContentModel cm = new ContentModel();
+		    cm.setId(item.getId());
+		    cm.setName(item.getName());
+		    
+		    contentModels.add(cm);
+		    
+		    System.out.println(item.getName());
 		}
+		
+		return contentModels;
 
 	}
+
+	public ArrayList<Document> queryByType(String queryType) throws Exception {
+		ArrayList<Document> docs = new ArrayList<>();
+		Session session = createSession();
+		// get the query name of cmis:objectId
+		ObjectType type = session.getTypeDefinition(queryType);
+		PropertyDefinition<?> objectIdPropDef = type.getPropertyDefinitions().get(PropertyIds.OBJECT_ID);
+		String objectIdQueryName = objectIdPropDef.getQueryName();
+
+		String queryString = "SELECT " + objectIdQueryName + " FROM " + type.getQueryName();
+
+		// execute query
+		ItemIterable<QueryResult> results = session.query(queryString, false);
+
+		for (QueryResult qResult : results) {
+		   String objectId = qResult.getPropertyValueByQueryName(objectIdQueryName);
+		   Document doc = (Document) session.getObject(session.createObjectId(objectId));
+		   docs.add(doc);
+		}
+		
+		return docs;
+	}
+	
 }

@@ -5,7 +5,7 @@
 	id="WebApp_ID" version="3.0">
 	<display-name>cmis</display-name>
 	<welcome-file-list>
-		<welcome-file>index.xhtml</welcome-file>
+		<welcome-file>hello.xhtml</welcome-file>
 	</welcome-file-list>
 
 	<!-- FacesServlet is main servlet responsible to handle all request. It 
@@ -18,11 +18,16 @@
 		<load-on-startup>1</load-on-startup>
 	</servlet>
 
+	<context-param>
+		<param-name>primefaces.THEME</param-name>
+		<param-value>cupertino</param-value>
+	</context-param>
+
 	<servlet-mapping>
 		<servlet-name>Faces Servlet</servlet-name>
 		<url-pattern>*.xhtml</url-pattern>
 	</servlet-mapping>
-	
+
 	<filter>
 		<filter-name>primeFacesFileUploadFilter</filter-name>
 		<filter-class>org.primefaces.webapp.filter.FileUploadFilter</filter-class>
