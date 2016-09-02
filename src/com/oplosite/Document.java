@@ -12,6 +12,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import javax.faces.application.FacesMessage;
 import javax.faces.bean.ManagedBean;
+import javax.faces.bean.ViewScoped;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
@@ -32,6 +33,7 @@ import utils.AlfrescoUtil;
  *
  */
 @ManagedBean(name = "document")
+@ViewScoped
 public class Document {
 
 	// A variable to store file to be uploaded
@@ -173,13 +175,19 @@ public class Document {
 	 * 
 	 * @throws Exception
 	 */
-	public void listFolder(ActionEvent actionEvent) throws Exception {
+	public void listFolder(ActionEvent actionEvent) {
 		System.out.println(">> Listing folders");
 
 		AlfrescoUtil alfresco = new AlfrescoUtil();
-		String folderId = alfresco.getFolderIdFromPath("/User Homes/admin");
-
-		contents = (ArrayList<ContentModel>) alfresco.listFolder(folderId);
+		String folderId;
+		
+		try {
+			folderId = alfresco.getFolderIdFromPath("/User Homes/admin");
+			contents = (ArrayList<ContentModel>) alfresco.listFolder(folderId);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 
 		FacesMessage message = new FacesMessage("Succesfully listing folders");
 		FacesContext.getCurrentInstance().addMessage(null, message);
@@ -190,14 +198,41 @@ public class Document {
 	 * 
 	 * @throws Exception
 	 */
-	public void download() throws Exception {
+	public void download(String workspaceId) {
 		System.out.println(">> Downloading file");
 
 		AlfrescoUtil alfresco = new AlfrescoUtil();
-		// String workspaceId = params.get("id");
-		String workspaceId = "b3468e62-71b9-42ca-ac57-81edab93cff2"; // DUMMY
-		Object[] doc = alfresco.download(workspaceId);
+
+		Object[] doc = null;
+		try {
+			doc = alfresco.download(workspaceId);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		InputStream stream = (InputStream) doc[0];
 		downloadedFile = new DefaultStreamedContent(stream, (String) doc[1], (String) doc[2]);
+	}
+	
+
+	/**
+	 * Silakan isi deskripsi method ini di sini
+	 * 
+	 * @throws Exception
+	 */
+	public void delete(String workspaceId) {
+		System.out.println(">> Deleting file");
+
+		AlfrescoUtil alfresco = new AlfrescoUtil();
+		
+		try {
+			alfresco.deleteContent(workspaceId);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		FacesMessage message = new FacesMessage("The content is succesfully deleted");
+		FacesContext.getCurrentInstance().addMessage(null, message);
 	}
 }

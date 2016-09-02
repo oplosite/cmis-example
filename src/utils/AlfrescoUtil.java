@@ -238,6 +238,20 @@ public class AlfrescoUtil {
 
 		return true;
 	}
+	
+
+	public boolean deleteContent(String id) throws Exception {
+		Session session = createSession();
+
+		CmisObject cmisObj = session.getObject(id);
+		
+		try {
+			cmisObj.delete();
+			return true;
+		} catch (Exception e) {
+			return false;
+		}
+	}
 
 	public String getFolderIdFromPath(String path) throws Exception {
 		Session session = createSession();

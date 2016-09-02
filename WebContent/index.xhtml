@@ -8,7 +8,7 @@
 	<title>JSF File Upload</title>
 </h:head>
 <h:body>
-	<h2 style="text-align:center;">Contoh Upload File ke Alfresco</h2>
+	<h2 style="text-align: center;">Contoh Upload File ke Alfresco</h2>
 	<!-- Layouting -->
 	<p:layout style="min-width:600px;min-height:500px;">
 		<p:layoutUnit position="west" resizable="true" size="300"
@@ -37,20 +37,19 @@
 					</p:column>
 
 					<p:column headerText="Action">
-						<p:commandLink id="downloadLink" value="Download" ajax="false"
-							actionListener="#{document.download}">
-							<p:fileDownload value="#{document.downloadedFile}">
-								<f:param name="id" value="#{doc.id}"></f:param>
-							</p:fileDownload>
-						</p:commandLink>
+						<p:commandButton value="Download" ajax="false"
+							icon="fa fa-fw fa-download"
+							actionListener="#{document.download(doc.id)}">
+							<p:fileDownload value="#{document.downloadedFile}" />
+						</p:commandButton>
+						<p:commandButton value="Delete" ajax="false"
+							icon="fa fa-fw fa-trash"
+							update="messages form-check:directory-list"
+							actionListener="#{document.delete(doc.id)}">
+						</p:commandButton>
 					</p:column>
 
 				</p:dataTable>
-
-				<p:commandButton actionListener="#{document.download}" ajax="false"
-					immediate="true" value="Download Demo">
-					<p:fileDownload value="#{document.downloadedFile}"/>
-				</p:commandButton>.
 			</h:form>
 		</p:layoutUnit>
 	</p:layout>
